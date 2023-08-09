@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete Item</title>
+</head>
+<body>
+    <h1>Delete Item</h1>
+    <form action="/inventario/delete" method="post">
+        ID (of item to delete): 
+        <select name="id_objeto">
+            <% ids.forEach(idObj => { %>
+                <option value="<%= idObj.id_objeto %>"><%= idObj.id_objeto %></option>
+            <% }); %>
+        </select>
+        <br>
+        <input type="submit" value="Delete">
+    </form>
+</body>
+</html>
