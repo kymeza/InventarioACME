@@ -94,10 +94,10 @@ app.post('/login', (req, res) => {
                 req.session.nombre = row.nombre
                 res.redirect('/');
             } else {
-                res.send("Incorrect password.");
+                res.send("Contreseña Incorrecta");
             }
         } else {
-            res.send("Email not found.");
+            res.send("Emnail no encontrado");
         }
     });
 });
@@ -147,7 +147,7 @@ app.post('/inventario/create', (req, res) => {
     let sql = `INSERT INTO objetos (id_objeto, desc_item, cantidad) VALUES ('${req.body.id_objeto}', '${req.body.desc_item}', ${req.body.cantidad})`;
     db.run(sql, function(err) {
         if (err) {
-            return res.status(500).send("Error inserting into database");
+            return res.send(err,err.message, err.stack);
         }
         res.redirect('/inventario');
     });
@@ -158,7 +158,7 @@ app.post('/inventario/update', (req, res) => {
     let sql = `UPDATE objetos SET desc_item = '${req.body.desc_item}', cantidad = ${req.body.cantidad} WHERE id_objeto = '${req.body.id_objeto}'`;
     db.run(sql, function(err) {
         if (err) {
-            return res.status(500).send("Error updating the database");
+            return res.send(err,err.message, err.stack);
         }
         res.redirect('/inventario');
     });
@@ -169,7 +169,7 @@ app.post('/inventario/delete', (req, res) => {
     let sql = `DELETE FROM objetos WHERE id_objeto = '${req.body.id_objeto}'`;
     db.run(sql, function(err) {
         if (err) {
-            return res.status(500).send("Error deleting from the database");
+            return res.send(err,err.message, err.stack);
         }
         res.redirect('/inventario');
     });

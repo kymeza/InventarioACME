@@ -10,12 +10,27 @@
 <body>
     <h1>Inventario</h1>
 
+    <nav>
+        <ul>
+            <li><a href="/">Inicio</a></li>
+            <li>
+                Inventario
+                <ul>
+                    <li><a href="/inventario">Ver Items</a></li>
+                    <li><a href="/inventario/create">Crear Item</a></li>
+                    <li><a href="/inventario/update">Actualizar Item</a></li>
+                    <li><a href="/inventario/delete">Borrar Item</a></li>
+                </ul>
+            </li>
+        </ul>
+    </nav>
+
     <table border="1">
         <thead>
             <tr>
                 <th>ID</th>
-                <th>Description</th>
-                <th>Quantity</th>
+                <th>Descripcion</th>
+                <th>Cantidad</th>
             </tr>
         </thead>
         <tbody>
