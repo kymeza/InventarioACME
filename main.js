@@ -76,28 +76,34 @@ app.get('/login', (req,res) => {
 
 //Servicio que se hace cargo del login del usuario
 app.post('/login', (req, res) => {
+
+    if (req.session.email) {
+        req.session.destroy(err => {
+            if(err) {
+                console.error("Error destroying session:", err);
+                res.status(500).send("Failed to log out");
+                return;
+            }
+            res.redirect('/');
+        });
+    }
+
     let email = req.body.email;
     let password = req.body.password;
 
     // First, check if the email exists
-    let sqlCheckEmail = "SELECT * FROM usuarios WHERE email = '" + email + "'";
+    let sqlCheckEmail = "SELECT * FROM usuarios WHERE email = '" + email +" AND password = "+ password +"'";
 
     db.get(sqlCheckEmail, [], (err, row) => {
         if (err) {
             res.send(err.message);
             return;
         }
-
-        if (row) {
-            if (row.password === password) {
-                req.session.email = email;
-                req.session.nombre = row.nombre
-                res.redirect('/');
-            } else {
-                res.send("Contreseña Incorrecta");
-            }
+        if (row) { 
+            req.session.email = email;
+            res.redirect('/');
         } else {
-            res.send("Emnail no encontrado");
+            res.send("Email no encontrado");
         }
     });
 });
@@ -107,7 +113,7 @@ app.get('/', (req, res) => {
     res.render('index');
 });
 
-app.get('/inventario', (req, res) => {
+app.get('/inventario', asegurarIdentidad, (req, res) => {
     let sql = "SELECT * FROM objetos";
     db.all(sql, [], (err, rows) => {
         if (err) {
@@ -118,11 +124,11 @@ app.get('/inventario', (req, res) => {
     });
 });
 
-app.get('/inventario/create', (req, res) => {
+app.get('/inventario/create', asegurarIdentidad, (req, res) => {
     res.render('inventario/create');
 });
 
-app.get('/inventario/update', (req, res) => {
+app.get('/inventario/update', asegurarIdentidad, (req, res) => {
     let sql = "SELECT id_objeto FROM objetos";
     db.all(sql, [], (err, rows) => {
         if (err) {
@@ -132,7 +138,7 @@ app.get('/inventario/update', (req, res) => {
     });
 });
 
-app.get('/inventario/delete', (req, res) => {
+app.get('/inventario/delete', asegurarIdentidad, (req, res) => {
     let sql = "SELECT id_objeto FROM objetos";
     db.all(sql, [], (err, rows) => {
         if (err) {
@@ -143,7 +149,7 @@ app.get('/inventario/delete', (req, res) => {
 });
 
 // Handling item creation
-app.post('/inventario/create', (req, res) => {
+app.post('/inventario/create', asegurarIdentidad, (req, res) => {
     let sql = `INSERT INTO objetos (id_objeto, desc_item, cantidad) VALUES ('${req.body.id_objeto}', '${req.body.desc_item}', ${req.body.cantidad})`;
     db.run(sql, function(err) {
         if (err) {
@@ -154,7 +160,7 @@ app.post('/inventario/create', (req, res) => {
 });
 
 // Handling item update
-app.post('/inventario/update', (req, res) => {
+app.post('/inventario/update', asegurarIdentidad, (req, res) => {
     let sql = `UPDATE objetos SET desc_item = '${req.body.desc_item}', cantidad = ${req.body.cantidad} WHERE id_objeto = '${req.body.id_objeto}'`;
     db.run(sql, function(err) {
         if (err) {
@@ -165,7 +171,7 @@ app.post('/inventario/update', (req, res) => {
 });
 
 // Handling item deletion
-app.post('/inventario/delete', (req, res) => {
+app.post('/inventario/delete', asegurarIdentidad, (req, res) => {
     let sql = `DELETE FROM objetos WHERE id_objeto = '${req.body.id_objeto}'`;
     db.run(sql, function(err) {
         if (err) {
@@ -175,6 +181,25 @@ app.post('/inventario/delete', (req, res) => {
     });
 });
 
+app.get('/logout', asegurarIdentidad, (req, res) => {
+    req.session.destroy(err => {
+        if(err) {
+            console.error("Error destroying session:", err);
+            res.status(500).send("Failed to log out");
+            return;
+        }
+        res.redirect('/');
+    });
+});
+
+//Funcion que permite injectarse para comprobar que un usuario tenga una sesión válida
+function asegurarIdentidad(req, res, next) {
+    if (req.session.email) {
+        return next();
+    } else {
+        res.redirect('/login');
+    }
+}
 
 app.listen(9000);
 
