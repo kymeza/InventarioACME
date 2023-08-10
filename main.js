@@ -34,7 +34,7 @@ db.serialize(function() {
     db.run("CREATE TABLE objetos (id_objeto TXT PRIMARY KEY, desc_item TEXT, cantidad INTEGER)");
 
     //Creamos Usuarios de Ejemplo
-    //PASSWORDS: PASSWORD + SALT
+    //PASSWORDS: SHA256(PASSWORD + SALT)
     
     db.run("INSERT INTO usuarios VALUES ('admin@admin.cl','Admin Admin','f78ddd9b2cc49c49cc4696552fbc9f422bec0e56a71ea70bb2599b10107a4b5b')");
     db.run("INSERT INTO usuarios VALUES ('user@user.cl','User Usuario','61f5f2fa2e80f96b959b1688d6d3b0b242190daad54226629dc337aaf6ca1ba8')");
@@ -91,8 +91,13 @@ app.post('/login', (req, res) => {
     let email = req.body.email;
     let password = req.body.password;
 
+    let passwordConSalt = password+process.env.salt;
+    let hash = crypto.createHash('sha256');
+    hash.update(passwordConSalt);
+    let hashContrasena = hash.digest('hex');
+
     // First, check if the email exists
-    let sqlCheckEmail = "SELECT * FROM usuarios WHERE email = '" + email +" AND password = "+ password +"'";
+    let sqlCheckEmail = "SELECT * FROM usuarios WHERE email = '" + email +"' AND password = '"+ hashContrasena +"'";
 
     db.get(sqlCheckEmail, [], (err, row) => {
         if (err) {
@@ -103,7 +108,7 @@ app.post('/login', (req, res) => {
             req.session.email = email;
             res.redirect('/');
         } else {
-            res.send("Email no encontrado");
+            res.send("Credenciales Invalidas");
         }
     });
 });
