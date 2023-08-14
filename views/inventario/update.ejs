@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Item</title>
+</head>
+<body>
+    <h1>Update Existing Item</h1>
+    <form action="/inventario/update" method="post">
+        ID (of item to update): 
+        <select name="id_objeto">
+            <% ids.forEach(idObj => { %>
+                <option value="<%= idObj.id_objeto %>"><%= idObj.id_objeto %></option>
+            <% }); %>
+        </select>
+        <br>
+        New Description: <input type="text" name="desc_item"><br>
+        New Quantity: <input type="number" name="cantidad"><br>
+        <input type="submit" value="Update">
+    </form>
+</body>
+</html>

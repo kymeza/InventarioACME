@@ -1,6 +1,7 @@
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const fs = require('fs');
+const bodyParser = require('body-parser');
 
 const session = require('express-session');
 const crypto = require('crypto');
@@ -14,7 +15,9 @@ const upload = multer({dest: 'uploads/'});
 
 
 //Creamos una BaseDatos SQLite para testear
-let db = new sqlite3.Database("database.db");
+//let db = new sqlite3.Database("database.db");
+let db = new sqlite3.Database(':memory:');
+
 
 //Leemos el secret.txt y manejamos cualquier exepcion.
 try {
@@ -25,18 +28,35 @@ try {
 }
 
 //INICIALIZAMOS BASE DE DATOS CON DATOS DE EJEMPLO -- RUN ONCE ONLY
-/* 
+
 db.serialize(function() {
     db.run("CREATE TABLE usuarios (email TXT PRIMARY KEY, nombre TEXT, password TEXT)");
     db.run("CREATE TABLE objetos (id_objeto TXT PRIMARY KEY, desc_item TEXT, cantidad INTEGER)");
 
     //Creamos Usuarios de Ejemplo
-    //PASSWORDS: PASSWORD + SALT
+    //PASSWORDS: SHA256(PASSWORD + SALT)
     
     db.run("INSERT INTO usuarios VALUES ('admin@admin.cl','Admin Admin','f78ddd9b2cc49c49cc4696552fbc9f422bec0e56a71ea70bb2599b10107a4b5b')");
     db.run("INSERT INTO usuarios VALUES ('user@user.cl','User Usuario','61f5f2fa2e80f96b959b1688d6d3b0b242190daad54226629dc337aaf6ca1ba8')");
+
+    //modificamos las bases de datos para añadir roles y permisos
+    db.run("CREATE TABLE roles (role_id INTEGER PRIMARY KEY, role_name TEXT)"); // New roles table
+    db.run("ALTER TABLE usuarios ADD COLUMN role_id INTEGER REFERENCES roles(role_id)"); // Add role_id column to usuarios table
+
+    // Insert roles
+    db.run("INSERT INTO roles (role_name) VALUES ('Administrator')");
+    db.run("INSERT INTO roles (role_name) VALUES ('Employee')");
+
+    // Update existing users with roles (assuming the IDs for Administrator and Employee are 1 and 2, respectively)
+    db.run("UPDATE usuarios SET role_id = 1 WHERE email = 'admin@admin.cl'");
+    db.run("UPDATE usuarios SET role_id = 2 WHERE email = 'user@user.cl'");
+    
+    // Example additional data
+    db.run("INSERT INTO usuarios (email, nombre, password, role_id) VALUES ('admin2@admin.cl','Admin II','passwordhash', 1)");  // Assuming passwordhash is the hashed version of the password.
+    db.run("INSERT INTO objetos VALUES ('obj3', 'Object 3', 100)");
+
 })
-*/
+
 
 //Consultamos la DB para probar que existan los registros.
 db.all("SELECT * FROM usuarios", (err, rows ) => {
@@ -63,7 +83,7 @@ app.use(cookieParser());
 app.use(session({
     secret: process.env.salt,
     resave: false,
-    cookie: {secure: true}
+    cookie: {secure: false}
 }));
 
 //Vista de Login
@@ -73,26 +93,129 @@ app.get('/login', (req,res) => {
 
 //Servicio que se hace cargo del login del usuario
 app.post('/login', (req, res) => {
+
+    if (req.session.email) {
+        req.session.destroy(err => {
+            if(err) {
+                console.error("Error destroying session:", err);
+                res.status(500).send("Failed to log out");
+                return;
+            }
+            res.redirect('/');
+        });
+    }
+
     let email = req.body.email;
     let password = req.body.password;
 
-    let passwordConSalt = password.concat(process.env.salt);
+    let passwordConSalt = password+process.env.salt;
     let hash = crypto.createHash('sha256');
     hash.update(passwordConSalt);
-    let passwordHash = hash.digest('hex');
+    let hashContrasena = hash.digest('hex');
 
-    let sql = "SELECT * FROM users WHERE email = ? AND password = ?";
-    db.get(sql, [email, passwordHash], (err, row) => {
-        if(err) {
-            res.status(500).json({"Error 500":"Internal Server Error"});
+    // First, check if the email exists
+    let sqlCheckEmail = "SELECT * FROM usuarios WHERE email = '" + email +"' AND password = '"+ hashContrasena +"'";
+
+    db.get(sqlCheckEmail, [], (err, row) => {
+        if (err) {
+            res.send(err.message);
             return;
         }
-        if(row) {
+        if (row) { 
             req.session.email = email;
-            res.redirect('/usersView');
+            res.redirect('/');
         } else {
-            res.status(400).json({"error": "Email o Contraseña no válidos"});
+            res.send("Credenciales Invalidas");
         }
+    });
+});
+
+
+app.get('/', (req, res) => {
+    res.render('index', { 
+        email: req.session.email,
+        role: req.session.role
+    });
+});
+
+
+app.get('/inventario', asegurarIdentidad, (req, res) => {
+    let sql = "SELECT * FROM objetos";
+    db.all(sql, [], (err, rows) => {
+        if (err) {
+            res.send(err,err.message, err.stack)
+            return;
+        }
+        res.render("inventario/index", { objetos: rows });
+    });
+});
+
+app.get('/inventario/create', asegurarIdentidad, (req, res) => {
+    res.render('inventario/create');
+});
+
+app.get('/inventario/update', asegurarIdentidad, (req, res) => {
+    let sql = "SELECT id_objeto FROM objetos";
+    db.all(sql, [], (err, rows) => {
+        if (err) {
+            throw err;
+        }
+        res.render('inventario/update', { ids: rows });
+    });
+});
+
+app.get('/inventario/delete', asegurarIdentidad, (req, res) => {
+    let sql = "SELECT id_objeto FROM objetos";
+    db.all(sql, [], (err, rows) => {
+        if (err) {
+            throw err;
+        }
+        res.render('inventario/delete', { ids: rows });
+    });
+});
+
+// Handling item creation
+app.post('/inventario/create', asegurarIdentidad, (req, res) => {
+    let sql = "INSERT INTO objetos (id_objeto, desc_item, cantidad) VALUES (?, ?, ?)";
+    //let sql = `INSERT INTO objetos (id_objeto, desc_item, cantidad) VALUES ('${req.body.id_objeto}', '${req.body.desc_item}', ${req.body.cantidad})`;
+    db.run(sql, [req.body.id_objeto, req.body.desc_item, req.body.cantidad ] , function(err) {
+        if (err) {
+            return res.status(500).send("Error de creacion de Producto")
+        }
+        res.redirect('/inventario');
+    });
+});
+
+// Handling item update
+app.post('/inventario/update', asegurarIdentidad, (req, res) => {
+    let sql = `UPDATE objetos SET desc_item = '${req.body.desc_item}', cantidad = ${req.body.cantidad} WHERE id_objeto = '${req.body.id_objeto}'`;
+    db.run(sql, function(err) {
+        if (err) {
+            return res.send(err,err.message, err.stack);
+        }
+        res.redirect('/inventario');
+    });
+});
+
+// Handling item deletion
+app.post('/inventario/delete', asegurarIdentidad, (req, res) => {
+    let sql = `DELETE FROM objetos WHERE id_objeto = '${req.body.id_objeto}'`;
+    db.run(sql, function(err) {
+        if (err) {
+            return res.send(err,err.message, err.stack);
+        }
+        res.redirect('/inventario');
+    });
+});
+
+app.get('/logout', asegurarIdentidad, (req, res) => {
+    req.session.destroy(err => {
+        if(err) {
+            console.error("Error destroying session:", err);
+            res.status(500).send("Failed to log out");
+            return;
+        }
+        res.redirect('/');
     });
 });
 
@@ -105,13 +228,7 @@ function asegurarIdentidad(req, res, next) {
     }
 }
 
-//TO-DO
-//Configurar Express Session
-//Configurar Motor EJS para las vistas
-//Implementar Login y Password.
-
 app.listen(9000);
-
 
 
 

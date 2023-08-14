@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body>
+    <header>
+        <h1>INVENTARIO ACME WAREHOUSE INC</h1>
+    </header>
+    
+    <nav>
+        <ul>
+            <li><a href="/">Home</a></li>
+            <li><a href="/login">About</a></li>
+            <% if (email) { %>
+                <% if (role === 'Administrator' || role === 'Employee') { %>
+                    <li><a href="/inventario">Inventario</a></li>
+                <% } %>
+                <% if (role === 'Administrator') { %>
+                    <li><a href="/inventario/create">Crear Item</a></li>
+                    <li><a href="/inventario/delete">Borrar Item</a></li>
+                <% } %>
+                <% if (role === 'Administrator' || role === 'Employee') { %>
+                    <li><a href="/inventario/update">Actualizar Item</a></li>
+                <% } %>
+                <li><a href="/logout">Log Off</a></li>
+            <% } %>
+        </ul>
+    </nav>
+
+    <main>
+        <section>
+            <h2>Desarrollo Seguro</h2>
+            <p>
+                "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+            </p>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; ACME WAREHOUSE (R) - Todos los derechos reservados</p>
+    </footer>
+</body>
+
+</html>

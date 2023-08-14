@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario</title>
+</head>
+
+<body>
+    <h1>Inventario</h1>
+
+    <nav>
+        <ul>
+            <li><a href="/">Home</a></li>
+            <li><a href="/login">About</a></li>
+            <% if (email) { %>
+                <% if (role === 'Administrator' || role === 'Employee') { %>
+                    <li><a href="/inventario">Inventario</a></li>
+                <% } %>
+                <% if (role === 'Administrator') { %>
+                    <li><a href="/inventario/create">Crear Item</a></li>
+                    <li><a href="/inventario/delete">Borrar Item</a></li>
+                <% } %>
+                <% if (role === 'Administrator' || role === 'Employee') { %>
+                    <li><a href="/inventario/update">Actualizar Item</a></li>
+                <% } %>
+                <li><a href="/logout">Log Off</a></li>
+            <% } %>
+        </ul>
+    </nav>
+
+    <table border="1">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Descripcion</th>
+                <th>Cantidad</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% objetos.forEach(objeto => { %>
+                <tr>
+                    <td><%= objeto.id_objeto %></td>
+                    <td><%= objeto.desc_item %></td>
+                    <td><%= objeto.cantidad %></td>
+                </tr>
+            <% }); %>
+        </tbody>
+    </table>
+</body>
+
+</html>
