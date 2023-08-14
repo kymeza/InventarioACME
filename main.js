@@ -38,6 +38,23 @@ db.serialize(function() {
     
     db.run("INSERT INTO usuarios VALUES ('admin@admin.cl','Admin Admin','f78ddd9b2cc49c49cc4696552fbc9f422bec0e56a71ea70bb2599b10107a4b5b')");
     db.run("INSERT INTO usuarios VALUES ('user@user.cl','User Usuario','61f5f2fa2e80f96b959b1688d6d3b0b242190daad54226629dc337aaf6ca1ba8')");
+
+    //modificamos las bases de datos para añadir roles y permisos
+    db.run("CREATE TABLE roles (role_id INTEGER PRIMARY KEY, role_name TEXT)"); // New roles table
+    db.run("ALTER TABLE usuarios ADD COLUMN role_id INTEGER REFERENCES roles(role_id)"); // Add role_id column to usuarios table
+
+    // Insert roles
+    db.run("INSERT INTO roles (role_name) VALUES ('Administrator')");
+    db.run("INSERT INTO roles (role_name) VALUES ('Employee')");
+
+    // Update existing users with roles (assuming the IDs for Administrator and Employee are 1 and 2, respectively)
+    db.run("UPDATE usuarios SET role_id = 1 WHERE email = 'admin@admin.cl'");
+    db.run("UPDATE usuarios SET role_id = 2 WHERE email = 'user@user.cl'");
+    
+    // Example additional data
+    db.run("INSERT INTO usuarios (email, nombre, password, role_id) VALUES ('admin2@admin.cl','Admin II','passwordhash', 1)");  // Assuming passwordhash is the hashed version of the password.
+    db.run("INSERT INTO objetos VALUES ('obj3', 'Object 3', 100)");
+
 })
 
 
@@ -115,8 +132,12 @@ app.post('/login', (req, res) => {
 
 
 app.get('/', (req, res) => {
-    res.render('index');
+    res.render('index', { 
+        email: req.session.email,
+        role: req.session.role
+    });
 });
+
 
 app.get('/inventario', asegurarIdentidad, (req, res) => {
     let sql = "SELECT * FROM objetos";
@@ -155,10 +176,11 @@ app.get('/inventario/delete', asegurarIdentidad, (req, res) => {
 
 // Handling item creation
 app.post('/inventario/create', asegurarIdentidad, (req, res) => {
-    let sql = `INSERT INTO objetos (id_objeto, desc_item, cantidad) VALUES ('${req.body.id_objeto}', '${req.body.desc_item}', ${req.body.cantidad})`;
-    db.run(sql, function(err) {
+    let sql = "INSERT INTO objetos (id_objeto, desc_item, cantidad) VALUES (?, ?, ?)";
+    //let sql = `INSERT INTO objetos (id_objeto, desc_item, cantidad) VALUES ('${req.body.id_objeto}', '${req.body.desc_item}', ${req.body.cantidad})`;
+    db.run(sql, [req.body.id_objeto, req.body.desc_item, req.body.cantidad ] , function(err) {
         if (err) {
-            return res.send(err,err.message, err.stack);
+            return res.status(500).send("Error de creacion de Producto")
         }
         res.redirect('/inventario');
     });
