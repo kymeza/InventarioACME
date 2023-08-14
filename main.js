@@ -221,11 +221,32 @@ app.get('/logout', asegurarIdentidad, (req, res) => {
 
 //Funcion que permite injectarse para comprobar que un usuario tenga una sesión válida
 function asegurarIdentidad(req, res, next) {
-    if (req.session.email) {
-        return next();
-    } else {
-        res.redirect('/login');
+    if (!req.session.email) {
+        return res.redirect('/login');
     }
+
+    // Get the role of the logged-in user
+    const sql = "SELECT r.role_name FROM usuarios u JOIN roles r ON u.role_id = r.role_id WHERE u.email = ?";
+    db.get(sql, [req.session.email], (err, row) => {
+        if (err) {
+            return res.status(500).send("Internal Server Error");
+        }
+        
+        if (!row) {
+            return res.status(403).send("Access Denied");
+        }
+        
+        const role = row.role_name;
+
+        // Check permissions based on the route
+        if (req.path.startsWith('/inventario') && role === 'Employee' && req.method !== 'GET') {
+            if (!['/inventario', '/inventario/update'].includes(req.path)) {
+                return res.status(403).send("Access Denied");
+            }
+        }
+
+        next();
+    });
 }
 
 app.listen(9000);
