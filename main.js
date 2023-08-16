@@ -219,6 +219,37 @@ app.get('/logout', asegurarIdentidad, (req, res) => {
     });
 });
 
+//TO-DO --> LIMITAR EL TAMAÑO DEL ARCHIVO Y RESTRINGIR EL TIPO DE ARCHIVO A SUBIR
+app.get('/upload', asegurarIdentidad, (req,res) => {
+    res.render('upload');
+});
+
+app.post('/upload', asegurarIdentidad, upload.single('file'), (req,res) => {
+
+    // No sanitization of filename
+    let fileName = req.file.originalname;
+
+    let targetPath = path.join(__dirname, 'uploads', fileName);
+
+    fs.rename(req.file.path , targetPath, (err) => {
+        if(err){
+            console.log(err);
+            res.status(500).json({"Error":"Internal Server Error"});
+            return;
+        }
+        res.status(202).json({"Success":"Archivo subido exitosamente"});
+    });
+});
+
+app.get('/listUploads', asegurarIdentidad, (req,res) => {
+    fs.readdir('./uploads', (err, files) => {
+        if (err) {
+            return res.status(500).json({"Error":"Internal Server Error"});
+        }
+        res.render('listUploads', {files})
+    });
+});
+
 //Funcion que permite injectarse para comprobar que un usuario tenga una sesión válida
 function asegurarIdentidad(req, res, next) {
     if (req.session.email) {

@@ -1,0 +1,40 @@
+<!-- views/upload.ejs -->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Upload File</title>
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <% if (!email) { %>
+                <li><a href="/login">Login</a></li>
+                <% } %>
+                <li><a href="/upload">Subir Archivo</a></li>
+                <li><a href="/listUploads">Ver Archivos Subidos</a></li>
+                <% if (email) { %>
+                    <% if (role === 'Administrator' || role === 'Employee') { %>
+                        <li><a href="/inventario">Inventario</a></li>
+                    <% } %>
+                    <% if (role === 'Administrator') { %>
+                        <li><a href="/inventario/create">Crear Item</a></li>
+                        <li><a href="/inventario/delete">Borrar Item</a></li>
+                    <% } %>
+                    <% if (role === 'Administrator' || role === 'Employee') { %>
+                        <li><a href="/inventario/update">Actualizar Item</a></li>
+                    <% } %>
+                    <li><a href="/logout">Log Off</a></li>
+                <% } %>
+            </ul>
+        </nav>
+    </header>
+    <form action="/upload" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" required>
+        <input type="text" name="filename" placeholder="Filename" required>
+        <button type="submit">Upload</button>
+    </form>
+</body>
+</html>

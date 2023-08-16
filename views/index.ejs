@@ -14,7 +14,11 @@
     <nav>
         <ul>
             <li><a href="/">Home</a></li>
-            <li><a href="/login">About</a></li>
+            <% if (!email) { %>
+            <li><a href="/login">Login</a></li>
+            <% } %>
+            <li><a href="/upload">Subir Archivo</a></li>
+            <li><a href="/listUploads">Ver Archivos Subidos</a></li>
             <% if (email) { %>
                 <% if (role === 'Administrator' || role === 'Employee') { %>
                     <li><a href="/inventario">Inventario</a></li>
