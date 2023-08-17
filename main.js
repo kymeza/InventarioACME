@@ -123,6 +123,7 @@ app.post('/login', (req, res) => {
         }
         if (row) { 
             req.session.email = email;
+            req.session.role = row.role_id;
             res.redirect('/');
         } else {
             res.send("Credenciales Invalidas");
@@ -146,7 +147,11 @@ app.get('/inventario', asegurarIdentidad, (req, res) => {
             res.send(err,err.message, err.stack)
             return;
         }
-        res.render("inventario/index", { objetos: rows });
+        res.render("inventario/index", { 
+            objetos: rows,
+            email: req.session.email,
+            role: req.session.role 
+        });
     });
 });
 
@@ -221,7 +226,10 @@ app.get('/logout', asegurarIdentidad, (req, res) => {
 
 //TO-DO --> LIMITAR EL TAMAÑO DEL ARCHIVO Y RESTRINGIR EL TIPO DE ARCHIVO A SUBIR
 app.get('/upload', asegurarIdentidad, (req,res) => {
-    res.render('upload');
+    res.render('upload', { 
+        email: req.session.email,
+        role: req.session.role
+    });
 });
 
 app.post('/upload', asegurarIdentidad, upload.single('file'), (req,res) => {

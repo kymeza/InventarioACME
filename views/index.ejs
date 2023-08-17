@@ -20,15 +20,8 @@
             <li><a href="/upload">Subir Archivo</a></li>
             <li><a href="/listUploads">Ver Archivos Subidos</a></li>
             <% if (email) { %>
-                <% if (role === 'Administrator' || role === 'Employee') { %>
+                <% if (role == '1' || role == '2') { %>
                     <li><a href="/inventario">Inventario</a></li>
-                <% } %>
-                <% if (role === 'Administrator') { %>
-                    <li><a href="/inventario/create">Crear Item</a></li>
-                    <li><a href="/inventario/delete">Borrar Item</a></li>
-                <% } %>
-                <% if (role === 'Administrator' || role === 'Employee') { %>
-                    <li><a href="/inventario/update">Actualizar Item</a></li>
                 <% } %>
                 <li><a href="/logout">Log Off</a></li>
             <% } %>
