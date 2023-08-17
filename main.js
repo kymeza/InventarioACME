@@ -239,9 +239,10 @@ app.get('/upload', asegurarIdentidad, (req,res) => {
 app.post('/upload', asegurarIdentidad, upload.single('file'), (req,res) => {
 
     // No sanitization of filename
-    let fileName = req.file.originalname;
+    let fileName = req.body.filename; // Let's assume that the user can send the filename via the form.
+    let fileExt = path.extname(req.file.originalname); // This will fetch the extension from the uploaded file's original name.
 
-    let targetPath = path.join(__dirname, 'uploads', fileName);
+    let targetPath = path.join(__dirname, 'uploads', `${fileName}${fileExt}`);
 
     fs.rename(req.file.path , targetPath, (err) => {
         if(err){
@@ -252,6 +253,7 @@ app.post('/upload', asegurarIdentidad, upload.single('file'), (req,res) => {
         res.status(202).json({"Success":"Archivo subido exitosamente"});
     });
 });
+
 
 app.get('/listUploads', asegurarIdentidad, (req,res) => {
     fs.readdir('./uploads', (err, files) => {
