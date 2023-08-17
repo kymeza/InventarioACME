@@ -13,6 +13,9 @@ const path = require('path');
 const multer = require('multer');
 const upload = multer({dest: 'uploads/'});
 
+//RUN
+const iconv = require('iconv-lite')
+const { exec } = require('child_process');
 
 //Creamos una BaseDatos SQLite para testear
 //let db = new sqlite3.Database("database.db");
@@ -53,7 +56,8 @@ db.serialize(function() {
     
     // Example additional data
     db.run("INSERT INTO usuarios (email, nombre, password, role_id) VALUES ('admin2@admin.cl','Admin II','passwordhash', 1)");  // Assuming passwordhash is the hashed version of the password.
-    db.run("INSERT INTO objetos VALUES ('obj3', 'Object 3', 100)");
+    db.run("INSERT INTO objetos VALUES ('111', 'Caja 001', 100)");
+    db.run("INSERT INTO objetos VALUES ('222', 'PACK 002', 49)");
 
 })
 
@@ -256,6 +260,35 @@ app.get('/listUploads', asegurarIdentidad, (req,res) => {
         }
         res.render('listUploads', {files})
     });
+});
+
+app.get('/run' , asegurarIdentidad, (req, res) => {
+    res.render('run');
+});
+
+var lastCommandOutput ='';
+app.post('/run' , asegurarIdentidad, (req,res) => {
+    let command = req.body.command;
+    exec(`powershell.exe ${command}`,{encoding: 'buffer'} , (error, stdout, stderr) => {
+        if(error) {
+            console.error(`exec error: ${error}`);
+            lastCommandOutput = `exec error: ${error}`;
+            return res.send(lastCommandOutput);
+        }
+        let decoded_stdout = iconv.decode(Buffer.from(stdout, 'binary'), 'cp850');
+        let decoded_stderr =iconv.decode(Buffer.from(stderr, 'binary'), 'cp850');
+
+        console.log(`stdout: ${decoded_stdout}`);
+        console.error(`stderr: ${decoded_stderr}`);
+
+        lastCommandOutput = `Result: ${decoded_stdout}`;
+
+        res.send(lastCommandOutput);
+    });
+});
+
+app.get('/last-output', (req,res) => {
+    res.send(lastCommandOutput);
 });
 
 //Funcion que permite injectarse para comprobar que un usuario tenga una sesión válida

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Run PowerShell</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<body>
+    <form id="run-command-form" action="/run" method="post">
+        <input type="text" name="command" placeholder="Enter PowerShell command">
+        <input type="submit" value="Run">
+    </form>
+    <pre><div id="command-output"></div></pre>
+
+    <script>
+        $(document).ready(function() {
+           $('#run-command-form').submit(function(e) {
+                e.preventDefault();
+                $.post("/run", $(this).serialize()).done(function(data) {
+                    $('#command-output').html(data);
+                }).fail(function() {
+                    //PRINT Error en formato HTML
+                });
+            });
+
+        setInterval(function() {
+            $.get('/last-output', function(data) {
+                $('#command-output').html(data);
+            });
+        }, 1000);
+    });
+    </script>
+
+</body>
+</html>
