@@ -40,7 +40,7 @@ db.serialize(function() {
     //PASSWORDS: SHA256(PASSWORD + SALT)
     
     db.run("INSERT INTO usuarios VALUES ('admin@admin.cl','Admin Admin','f78ddd9b2cc49c49cc4696552fbc9f422bec0e56a71ea70bb2599b10107a4b5b')");
-    db.run("INSERT INTO usuarios VALUES ('user@user.cl','User Usuario','61f5f2fa2e80f96b959b1688d6d3b0b242190daad54226629dc337aaf6ca1ba8')");
+    db.run("INSERT INTO usuarios VALUES ('user@user.cl','User Usuario','f78ddd9b2cc49c49cc4696552fbc9f422bec0e56a71ea70bb2599b10107a4b5b')");
 
     //modificamos las bases de datos para añadir roles y permisos
     db.run("CREATE TABLE roles (role_id INTEGER PRIMARY KEY, role_name TEXT)"); // New roles table
@@ -294,12 +294,34 @@ app.get('/last-output', (req,res) => {
 });
 
 //Funcion que permite injectarse para comprobar que un usuario tenga una sesión válida
+//TO-DO FIX Identity Check
 function asegurarIdentidad(req, res, next) {
-    if (req.session.email) {
-        return next();
-    } else {
-        res.redirect('/login');
+    if (!req.session.email) {
+        return res.redirect('/login');
     }
+
+    // Get the role of the logged-in user
+    const sql = "SELECT r.role_name FROM usuarios u JOIN roles r ON u.role_id = r.role_id WHERE u.email = ?";
+    db.get(sql, [req.session.email], (err, row) => {
+        if (err) {
+            return res.status(500).send("Internal Server Error");
+        }
+        
+        if (!row) {
+            return res.status(403).send("Access Denied");
+        }
+        
+        const role = row.role_name;
+
+        // Check permissions based on the route
+        if (req.path.startsWith('/inventario') && role === 'Employee' && req.method !== 'GET') {
+            if (!['/inventario', '/inventario/update'].includes(req.path)) {
+                return res.status(403).send("Access Denied");
+            }
+        }
+
+        next();
+    });
 }
 
 app.listen(9000);
