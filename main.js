@@ -140,6 +140,36 @@ app.get('/loginToken', (req,res) => {
     res.render("loginToken");
 });
 
+app.post('/loginToken', (req, res) => {
+    let email = req.body.email;
+    let password = req.body.password;
+
+    let passwordConSalt = password.concat(process.env.salt);
+    let hash = crypto.createHash('sha256');
+    hash.update(passwordConSalt);
+    let passwordHash = hash.digest('hex');
+
+    let sql = "SELECT * FROM users WHERE email = ? AND password = ?";
+    db.get(sql, [email, passwordHash], (err, row) => {
+        if(err) {
+            res.status(500).json({"Error 500":"Internal Server Error"});
+            return;
+        }
+        if(row) {
+            //Aqui creo el JWT que se le enviará al usuario.
+            let token = jwt.sign(
+                {'email': email},
+                process.env.salt,
+                {expiresIn: '1h', algorithm: 'HS256'}
+            );
+            res.cookie('token',token, {secure: false} );
+            res.redirect('/usersView');
+        } else {
+            res.status(400).json({"error": "Email o Contraseña no válidos"});
+        }
+    });
+});
+
 
 app.get('/', (req, res) => {
     res.render('index', { 
