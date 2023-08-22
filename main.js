@@ -380,13 +380,13 @@ function asegurarToken(req, res, next) {
         let tokenToVerify = req.headers.bearer;
         jwt.verify(tokenToVerify, process.env.salt, function(err, decoded) {
             if (err) {
-                res.redirect('/login');
+                res.status(401).message("INVALID REQUEST");
             } else {
                 return next();
             }
         });   
     } else {
-        res.redirect('/login');
+        res.status(401).message("INVALID REQUEST");
     }
 }
 
