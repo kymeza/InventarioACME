@@ -169,9 +169,20 @@ app.post('/loginToken', (req, res) => {
     });
 });
 
-app.get('/api/v1/objetos', asegurarToken
+//Enpoint GET para obtener los objetos de la DB
+app.get('/api/v1/objetos', asegurarToken, (req, res) => {
+    db.all('SELECT * FROM objetos', function(err, rows) {
+        if(err) {
+            res.status(500).json({"Error":"Internal Server Error"});
+            return;
+        }
+        res.json({
+            "message" : "success",
+            "data": rows
+        });
+    });
+});
 
-)
 
 
 
