@@ -376,17 +376,17 @@ function asegurarIdentidad(req, res, next) {
 }
 
 function asegurarToken(req, res, next) {
-    if (req.headers.bearer) {
-        let tokenToVerify = req.headers.bearer;
-        jwt.verify(tokenToVerify, process.env.salt, function(err, decoded) {
+    if (req.headers.authorization) {
+        let tokenToVerify = req.headers.authorization.split(' ');
+        jwt.verify(tokenToVerify[1], process.env.salt, function(err, decoded) {
             if (err) {
-                res.status(401).message("INVALID REQUEST");
+                res.status(401).send("INVALID REQUEST");
             } else {
                 return next();
             }
         });   
     } else {
-        res.status(401).message("INVALID REQUEST");
+        res.status(401).send("INVALID REQUEST");
     }
 }
 
