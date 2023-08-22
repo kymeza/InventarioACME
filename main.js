@@ -149,7 +149,7 @@ app.post('/loginToken', (req, res) => {
     hash.update(passwordConSalt);
     let passwordHash = hash.digest('hex');
 
-    let sql = "SELECT * FROM users WHERE email = ? AND password = ?";
+    let sql = "SELECT * FROM usuarios WHERE email = ? AND password = ?";
     db.get(sql, [email, passwordHash], (err, row) => {
         if(err) {
             res.status(500).json({"Error 500":"Internal Server Error"});
