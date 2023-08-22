@@ -135,6 +135,11 @@ app.post('/login', (req, res) => {
     });
 });
 
+//Vista de Login
+app.get('/loginToken', (req,res) => {
+    res.render("loginToken");
+});
+
 
 app.get('/', (req, res) => {
     res.render('index', { 
