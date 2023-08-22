@@ -169,6 +169,11 @@ app.post('/loginToken', (req, res) => {
     });
 });
 
+app.get('/api/v1/objetos', asegurarToken
+
+)
+
+
 
 app.get('/', (req, res) => {
     res.render('index', { 
@@ -176,6 +181,7 @@ app.get('/', (req, res) => {
         role: req.session.role
     });
 });
+
 
 
 app.get('/inventario', asegurarIdentidad, (req, res) => {
@@ -356,6 +362,21 @@ function asegurarIdentidad(req, res, next) {
 
         next();
     });
+}
+
+function asegurarToken(req, res, next) {
+    if (req.headers.bearer) {
+        let tokenToVerify = req.headers.bearer;
+        jwt.verify(tokenToVerify, process.env.salt, function(err, decoded) {
+            if (err) {
+                res.redirect('/login');
+            } else {
+                return next();
+            }
+        });   
+    } else {
+        res.redirect('/login');
+    }
 }
 
 app.listen(9000);
