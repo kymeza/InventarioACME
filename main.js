@@ -162,8 +162,7 @@ app.post('/loginToken', (req, res) => {
                 process.env.salt,
                 {expiresIn: '1h', algorithm: 'HS256'}
             );
-            res.cookie('token',token, {secure: false} );
-            res.redirect('/usersView');
+            res.status(200).json({"token":token})
         } else {
             res.status(400).json({"error": "Email o Contraseña no válidos"});
         }
